@@ -397,3 +397,66 @@ function renderMainContent() {
   addProductListeners();
   addCartListeners();
 }
+
+function renderProducts(productsToRender = null) {
+  let products = productsToRender || state.products;
+
+  if (state.selectedCategory !== "all" && !productsToRender) {
+    products = state.products.filter(
+      (p) => p.category === state.selectedCategory,
+    );
+  }
+
+  if (products.length === 0) {
+    return '<p class="col-span-full text-center text-gray-500 py-8">No products found in this category.</p>';
+  }
+
+  return products
+    .map(
+      (product) => `
+        <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition product-card" data-id="${product.id}">
+            <img src="${product.image}" alt="${product.title}" class="w-full h-48 object-contain p-4 hover:scale-105 transition duration-300">
+            <div class="p-4">
+                <h3 class="font-semibold mb-2 truncate" title="${product.title}">${product.title}</h3>
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-blue-600 font-bold">$${product.price}</span>
+                    <span class="bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded">${product.category}</span>
+                </div>
+                <div class="flex items-center mb-3">
+                    <div class="flex text-yellow-400">
+                        ${renderStars(product.rating.rate)}
+                    </div>
+                    <span class="text-gray-500 text-sm ml-2">(${product.rating.count})</span>
+                </div>
+                <div class="flex gap-2">
+                    <button class="details-btn flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-3 rounded text-sm transition" data-id="${product.id}">
+                        Details
+                    </button>
+                    <button class="add-to-cart-btn flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-3 rounded text-sm transition" data-id="${product.id}">
+                        Add to Cart
+                    </button>
+                </div>
+            </div>
+        </div>
+    `,
+    )
+    .join("");
+}
+
+function renderStars(rating) {
+  const fullStars = Math.floor(rating);
+  const hasHalfStar = rating % 1 >= 0.5;
+  let stars = "";
+
+  for (let i = 0; i < 5; i++) {
+    if (i < fullStars) {
+      stars += '<i class="fas fa-star"></i>';
+    } else if (i === fullStars && hasHalfStar) {
+      stars += '<i class="fas fa-star-half-alt"></i>';
+    } else {
+      stars += '<i class="far fa-star"></i>';
+    }
+  }
+
+  return stars;
+}
