@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SwiftCart - Your Modern E-commerce Store</title>
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Toast notification animation */
+        .toast-notification {
+            transition: transform 0.3s ease-in-out;
+            max-width: 350px;
+            z-index: 9999;
+        }
+        
+        /* Loading spinner animation */
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .animate-spin {
+            animation: spin 1s linear infinite;
+        }
+        
+        /* Pulse animation for loading text */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .animate-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        
+        /* Smooth scrolling */
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        /* Product image hover effect */
+        .product-card img {
+            transition: transform 0.3s ease;
+        }
+        
+        .product-card:hover img {
+            transform: scale(1.05);
+        }
+        
+        /* Custom scrollbar for cart sidebar */
+        #cartSidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        #cartSidebar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        
+        #cartSidebar::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 3px;
+        }
+        
+        #cartSidebar::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- App Container -->
+    <div id="app" class="min-h-screen flex flex-col">
+        <!-- Navbar -->
+        <nav class="bg-white shadow-lg sticky top-0 z-50">
+            <div class="container mx-auto px-4">
+                <div class="flex justify-between items-center h-16">
+                    <!-- Logo -->
+                    <div class="text-2xl font-bold text-blue-600">SwiftCart</div>
+                    
+                    <!-- Menu Items (Desktop) -->
+                    <div class="hidden md:flex space-x-8">
+                        <a href="#" class="nav-link text-gray-700 hover:text-blue-600 transition" data-section="home">Home</a>
+                        <a href="#" class="nav-link text-gray-700 hover:text-blue-600 transition" data-section="products">Products</a>
+                        <a href="#" class="nav-link text-gray-700 hover:text-blue-600 transition" data-section="about">About</a>
+                        <a href="#" class="nav-link text-gray-700 hover:text-blue-600 transition" data-section="contact">Contact</a>
+                    </div>
+                    
+                    <!-- Cart Icon -->
+                    <div class="relative cursor-pointer" id="cartIcon">
+                        <i class="fas fa-shopping-cart text-2xl text-gray-700"></i>
+                        <span id="cartCount" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center hidden">0</span>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Mobile Menu (Hidden by default) -->
+        <div id="mobileMenu" class="md:hidden bg-white border-t hidden">
+            <div class="container mx-auto px-4 py-2 flex flex-col space-y-2">
+                <a href="#" class="nav-link text-gray-700 hover:text-blue-600 transition py-2" data-section="home">Home</a>
+                <a href="#" class="nav-link text-gray-700 hover:text-blue-600 transition py-2" data-section="products">Products</a>
+                <a href="#" class="nav-link text-gray-700 hover:text-blue-600 transition py-2" data-section="about">About</a>
+                <a href="#" class="nav-link text-gray-700 hover:text-blue-600 transition py-2" data-section="contact">Contact</a>
+            </div>
+        </div>
+
+        <!-- Hero Section -->
+        <section class="relative h-[500px] bg-cover bg-center" style="background-image: url('assets/banner-image.png');">
+            <div class="absolute inset-0 bg-black bg-opacity-50"></div>
+            <div class="relative container mx-auto px-4 h-full flex flex-col items-center justify-center text-white text-center">
+                <h1 class="text-4xl md:text-5xl font-bold mb-4">Best Collection For You</h1>
+                <p class="text-xl mb-8">Discover amazing products at unbeatable prices</p>
+                <button class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg transition transform hover:scale-105">
+                    Shop Now
+                </button>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section class="py-16 bg-white">
+            <div class="container mx-auto px-4">
+                <h2 class="text-3xl font-bold text-center mb-12">Why Choose Us</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                    <!-- Fast Delivery -->
+                    <div class="text-center p-6 rounded-lg hover:shadow-lg transition">
+                        <i class="fas fa-truck text-4xl text-blue-600 mb-4"></i>
+                        <h3 class="text-xl font-semibold mb-2">Fast Delivery</h3>
+                        <p class="text-gray-600">Quick and reliable shipping to your doorstep</p>
+                    </div>
+                    
+                    <!-- 24/7 Support -->
+                    <div class="text-center p-6 rounded-lg hover:shadow-lg transition">
+                        <i class="fas fa-headset text-4xl text-blue-600 mb-4"></i>
+                        <h3 class="text-xl font-semibold mb-2">24/7 Support</h3>
+                        <p class="text-gray-600">We're here to help you anytime, day or night</p>
+                    </div>
+                    
+                    <!-- Secure Payment -->
+                    <div class="text-center p-6 rounded-lg hover:shadow-lg transition">
+                        <i class="fas fa-lock text-4xl text-blue-600 mb-4"></i>
+                        <h3 class="text-xl font-semibold mb-2">Secure Payment</h3>
+                        <p class="text-gray-600">Your transactions are always safe and encrypted</p>
+                    </div>
+                    
+                    <!-- Quality Guarantee -->
+                    <div class="text-center p-6 rounded-lg hover:shadow-lg transition">
+                        <i class="fas fa-medal text-4xl text-blue-600 mb-4"></i>
+                        <h3 class="text-xl font-semibold mb-2">Quality Guarantee</h3>
+                        <p class="text-gray-600">100% satisfaction guarantee on all products</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Dynamic Content Will Be Loaded Here -->
+        <div id="dynamic-content" class="flex-grow">
+            <!-- Loading spinner will show here initially -->
+            <div id="initial-loader" class="flex flex-col justify-center items-center py-16">
+                <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-600 mb-4"></div>
+                <p class="text-gray-600 animate-pulse">Loading amazing products...</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
