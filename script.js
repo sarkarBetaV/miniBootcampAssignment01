@@ -740,3 +740,156 @@ function closeSuccessModal() {
   successModal.classList.remove("flex");
   document.body.style.overflow = "auto";
 }
+
+// ========== UPDATE CART SIDEBAR BUTTON ==========
+function updateCartSidebarButton() {
+  const checkoutBtn = document.querySelector("#cartSidebar button");
+  if (checkoutBtn) {
+    checkoutBtn.textContent = "Proceed to Checkout";
+    checkoutBtn.removeEventListener("click", openCheckout);
+    checkoutBtn.addEventListener("click", openCheckout);
+  }
+}
+
+// ========== ADD CHECKOUT LISTENERS ==========
+// ========== ADD CHECKOUT LISTENERS ==========
+// ========== ADD CHECKOUT LISTENERS ==========
+function addCheckoutListeners() {
+  console.log("Setting up checkout listeners...");
+
+  // Get the close button
+  const closeBtn = document.getElementById("closeCheckout");
+
+  if (closeBtn) {
+    console.log("Close button found, attaching event listener");
+
+    // Remove any existing listeners by cloning and replacing
+    const newCloseBtn = closeBtn.cloneNode(true);
+    closeBtn.parentNode.replaceChild(newCloseBtn, closeBtn);
+
+    // Add fresh event listener
+    newCloseBtn.addEventListener("click", function (event) {
+      event.preventDefault();
+      event.stopPropagation();
+      console.log("Close button clicked!");
+      closeCheckout();
+    });
+  } else {
+    console.log("Close button NOT found!");
+  }
+
+  // Close when clicking outside modal
+  const checkoutModal = document.getElementById("checkoutModal");
+  if (checkoutModal) {
+    checkoutModal.addEventListener("click", function (event) {
+      if (event.target === checkoutModal) {
+        console.log("Clicked outside modal");
+        closeCheckout();
+      }
+    });
+  }
+
+  // Payment method toggle
+  document.querySelectorAll('input[name="payment"]').forEach((radio) => {
+    radio.addEventListener("change", toggleCreditCardFields);
+  });
+
+  // Place order button
+  const placeOrderBtn = document.getElementById("placeOrderBtn");
+  if (placeOrderBtn) {
+    placeOrderBtn.addEventListener("click", placeOrder);
+  }
+
+  // Continue shopping button
+  const continueBtn = document.getElementById("continueShoppingBtn");
+  if (continueBtn) {
+    continueBtn.addEventListener("click", function () {
+      closeSuccessModal();
+    });
+  }
+
+  // Close success modal when clicking outside
+  const successModal = document.getElementById("successModal");
+  if (successModal) {
+    successModal.addEventListener("click", function (event) {
+      if (event.target === successModal) {
+        closeSuccessModal();
+      }
+    });
+  }
+}
+
+// ========== LOAD PRODUCTS BY CATEGORY ==========
+async function loadProductsByCategory(category) {
+  // Show loading spinner in products grid
+  showProductsLoadingSpinner();
+
+  let productsToShow = [];
+
+  if (category === "all") {
+    productsToShow = state.products;
+  } else {
+    // Check if we have cached products for this category
+    if (!state.productsByCategory[category]) {
+      try {
+        const categoryProducts = await fetchData(
+          `https://fakestoreapi.com/products/category/${category}`,
+        );
+        if (categoryProducts) {
+          state.productsByCategory[category] = categoryProducts;
+          productsToShow = categoryProducts;
+        }
+      } catch (error) {
+        showToast("Failed to load category products", "error");
+        productsToShow = [];
+      }
+    } else {
+      productsToShow = state.productsByCategory[category];
+    }
+  }
+
+  // Update the products grid
+  document.getElementById("productsHeading").textContent =
+    category === "all" ? "All Products" : `${category} Products`;
+  document.getElementById("productsGrid").innerHTML =
+    renderProducts(productsToShow);
+
+  // Re-attach product listeners
+  addProductListeners();
+}
+
+// ========== TOAST NOTIFICATION ==========
+function showToast(message, type = "success") {
+  // Remove existing toast if any
+  const existingToast = document.querySelector(".toast-notification");
+  if (existingToast) {
+    existingToast.remove();
+  }
+
+  // Create toast element
+  const toast = document.createElement("div");
+  toast.className = `toast-notification fixed top-20 right-4 z-50 px-6 py-3 rounded-lg shadow-lg transform transition-all duration-500 translate-x-full ${
+    type === "success" ? "bg-green-500" : "bg-red-500"
+  } text-white`;
+  toast.innerHTML = `
+        <div class="flex items-center gap-3">
+            <i class="fas ${type === "success" ? "fa-check-circle" : "fa-exclamation-circle"} text-xl"></i>
+            <span>${message}</span>
+        </div>
+    `;
+
+  document.body.appendChild(toast);
+
+  // Animate in
+  setTimeout(() => {
+    toast.classList.remove("translate-x-full");
+  }, 100);
+
+  // Remove after 3 seconds
+  setTimeout(() => {
+    toast.classList.add("translate-x-full");
+    setTimeout(() => {
+      toast.remove();
+    }, 500);
+  }, 3000);
+}
