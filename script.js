@@ -1094,3 +1094,329 @@ function addCategoryListeners() {
     });
   });
 }
+
+function addProductListeners() {
+  // Details buttons
+  document.querySelectorAll(".details-btn").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const productId = parseInt(e.target.dataset.id);
+      openProductModal(productId);
+    });
+  });
+
+  // Add to cart buttons
+  document.querySelectorAll(".add-to-cart-btn").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const productId = parseInt(e.target.dataset.id);
+      addToCart(productId);
+
+      // Visual feedback on button
+      const originalText = btn.textContent;
+      btn.innerHTML = '<i class="fas fa-check mr-1"></i> Added!';
+      btn.classList.remove("bg-blue-600", "hover:bg-blue-700");
+      btn.classList.add("bg-green-600", "hover:bg-green-700");
+
+      setTimeout(() => {
+        btn.innerHTML = "Add to Cart";
+        btn.classList.remove("bg-green-600", "hover:bg-green-700");
+        btn.classList.add("bg-blue-600", "hover:bg-blue-700");
+      }, 2000);
+    });
+  });
+}
+
+function addCartListeners() {
+  // Toggle cart sidebar
+  const cartIcon = document.getElementById("cartIcon");
+  if (cartIcon) {
+    cartIcon.addEventListener("click", toggleCart);
+  }
+
+  const closeCartBtn = document.getElementById("closeCart");
+  if (closeCartBtn) {
+    closeCartBtn.addEventListener("click", toggleCart);
+  }
+
+  // Remove from cart listeners (delegation)
+  const cartItems = document.getElementById("cartItems");
+  if (cartItems) {
+    cartItems.addEventListener("click", (e) => {
+      const removeBtn = e.target.closest(".remove-from-cart");
+      if (removeBtn) {
+        const productId = parseInt(removeBtn.dataset.id);
+        removeFromCart(productId);
+      }
+    });
+  }
+
+  // Checkout button - IMPORTANT: Add this listener
+  const checkoutBtn = document.getElementById("checkoutBtn");
+  if (checkoutBtn) {
+    console.log("Checkout button found, attaching listener"); // Debug log
+    checkoutBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      console.log("Checkout button clicked"); // Debug log
+      openCheckout();
+    });
+  } else {
+    console.log("Checkout button NOT found!"); // Debug log
+  }
+}
+
+function toggleCart() {
+  const sidebar = document.getElementById("cartSidebar");
+  sidebar.classList.toggle("translate-x-full");
+}
+
+// ========== NAVIGATION FUNCTIONS ==========
+function scrollToProducts() {
+  const categoriesSection = document.querySelector(".bg-gray-100");
+  if (categoriesSection) {
+    categoriesSection.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  }
+}
+
+function scrollToTop() {
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth",
+  });
+}
+
+function addNavigationListeners() {
+  // Handle all navigation links
+  document.querySelectorAll(".nav-link").forEach((link) => {
+    link.addEventListener("click", (e) => {
+      e.preventDefault();
+      const section = link.dataset.section;
+
+      switch (section) {
+        case "home":
+          scrollToTop();
+          break;
+        case "products":
+          scrollToProducts();
+          break;
+        case "about":
+        case "contact":
+          // For now, just scroll to products
+          scrollToProducts();
+          break;
+      }
+
+      // Close mobile menu if open
+      const mobileMenu = document.getElementById("mobileMenu");
+      if (mobileMenu && !mobileMenu.classList.contains("hidden")) {
+        mobileMenu.classList.add("hidden");
+      }
+    });
+  });
+
+  // Shop Now button
+  const shopNowBtn = document.querySelector(".relative button");
+  if (shopNowBtn && shopNowBtn.textContent.includes("Shop Now")) {
+    shopNowBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      scrollToProducts();
+    });
+  }
+}
+
+// ========== MOBILE MENU SETUP ==========
+function setupMobileMenu() {
+  // Create hamburger menu button for mobile
+  const navbar = document.querySelector("nav .container .flex");
+  const mobileMenuBtn = document.createElement("button");
+  mobileMenuBtn.id = "mobileMenuBtn";
+  mobileMenuBtn.className = "md:hidden text-2xl text-gray-700 mr-4";
+  mobileMenuBtn.innerHTML = '<i class="fas fa-bars"></i>';
+
+  // Insert before the logo
+  const logo = document.querySelector("nav .container .flex > div:first-child");
+  logo.parentNode.insertBefore(mobileMenuBtn, logo);
+
+  // Toggle mobile menu
+  mobileMenuBtn.addEventListener("click", () => {
+    const mobileMenu = document.getElementById("mobileMenu");
+    mobileMenu.classList.toggle("hidden");
+  });
+
+  // Close mobile menu when clicking a link
+  document.querySelectorAll("#mobileMenu a").forEach((link) => {
+    link.addEventListener("click", () => {
+      document.getElementById("mobileMenu").classList.add("hidden");
+    });
+  });
+}
+
+// ========== TRENDING PRODUCTS SECTION ==========
+function addTrendingSection() {
+  const trendingSection = document.createElement("section");
+  trendingSection.className = "py-16 bg-white";
+  trendingSection.innerHTML = `
+        <div class="container mx-auto px-4">
+            <h2 class="text-3xl font-bold text-center mb-12">Trending Now</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                ${getTopRatedProducts()
+                  .map(
+                    (product) => `
+                    <div class="bg-gray-50 rounded-lg p-6 text-center hover:shadow-lg transition">
+                        <img src="${product.image}" alt="${product.title}" class="h-32 mx-auto mb-4 object-contain hover:scale-110 transition duration-300">
+                        <h3 class="font-semibold mb-2">${product.title.substring(0, 30)}...</h3>
+                        <div class="flex justify-center items-center mb-2">
+                            <span class="text-blue-600 font-bold text-xl">$${product.price}</span>
+                        </div>
+                        <div class="flex justify-center text-yellow-400 mb-3">
+                            ${renderStars(product.rating.rate)}
+                        </div>
+                        <button class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition text-sm view-product" data-id="${product.id}">
+                            View Product
+                        </button>
+                    </div>
+                `,
+                  )
+                  .join("")}
+            </div>
+        </div>
+    `;
+
+  // Insert after features section
+  const featuresSection = document.querySelector(".py-16.bg-white");
+  if (featuresSection) {
+    featuresSection.insertAdjacentElement("afterend", trendingSection);
+  } else {
+    dynamicContent.insertAdjacentElement("beforebegin", trendingSection);
+  }
+
+  // Add listeners to view product buttons
+  trendingSection.querySelectorAll(".view-product").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const productId = parseInt(btn.dataset.id);
+      openProductModal(productId);
+    });
+  });
+}
+
+function getTopRatedProducts() {
+  // Sort by rating and take top 3
+  return [...state.products]
+    .sort((a, b) => b.rating.rate - a.rating.rate)
+    .slice(0, 3);
+}
+
+// ========== NEWSLETTER AND FOOTER ==========
+function addNewsletterAndFooter() {
+  const footer = document.createElement("footer");
+  footer.className = "bg-gray-800 text-white mt-16";
+  footer.innerHTML = `
+        <!-- Newsletter -->
+        <div class="bg-blue-600 py-12">
+            <div class="container mx-auto px-4 text-center">
+                <h3 class="text-2xl font-bold mb-4">Subscribe to Our Newsletter</h3>
+                <p class="mb-6">Get the latest updates on new products and upcoming sales</p>
+                <form id="newsletterForm" class="max-w-md mx-auto flex flex-col sm:flex-row gap-4">
+                    <input type="email" placeholder="Enter your email" required 
+                           class="flex-1 px-4 py-3 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-300">
+                    <button type="submit" class="bg-gray-800 hover:bg-gray-900 text-white px-6 py-3 rounded-lg transition">
+                        Subscribe
+                    </button>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Footer Content -->
+        <div class="container mx-auto px-4 py-12">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <!-- About -->
+                <div>
+                    <h4 class="text-xl font-bold mb-4">SwiftCart</h4>
+                    <p class="text-gray-400">Your one-stop shop for everything you need. Quality products, best prices.</p>
+                </div>
+                
+                <!-- Quick Links -->
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Quick Links</h4>
+                    <ul class="space-y-2 text-gray-400">
+                        <li><a href="#" class="hover:text-white transition">About Us</a></li>
+                        <li><a href="#" class="hover:text-white transition">Contact</a></li>
+                        <li><a href="#" class="hover:text-white transition">FAQs</a></li>
+                        <li><a href="#" class="hover:text-white transition">Shipping Info</a></li>
+                    </ul>
+                </div>
+                
+                <!-- Customer Service -->
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Customer Service</h4>
+                    <ul class="space-y-2 text-gray-400">
+                        <li><a href="#" class="hover:text-white transition">Returns</a></li>
+                        <li><a href="#" class="hover:text-white transition">Size Guide</a></li>
+                        <li><a href="#" class="hover:text-white transition">Track Order</a></li>
+                        <li><a href="#" class="hover:text-white transition">Help Center</a></li>
+                    </ul>
+                </div>
+                
+                <!-- Social Links -->
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Follow Us</h4>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-gray-400 hover:text-white text-2xl transition">
+                            <i class="fab fa-facebook"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white text-2xl transition">
+                            <i class="fab fa-twitter"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white text-2xl transition">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white text-2xl transition">
+                            <i class="fab fa-youtube"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Copyright -->
+            <div class="border-t border-gray-700 mt-8 pt-8 text-center text-gray-400">
+                <p>&copy; 2026 SwiftCart. All rights reserved.</p>
+            </div>
+        </div>
+    `;
+
+  dynamicContent.appendChild(footer);
+
+  // Newsletter form submission
+  const newsletterForm = document.getElementById("newsletterForm");
+  if (newsletterForm) {
+    newsletterForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const email = e.target.querySelector('input[type="email"]').value;
+      showToast(`Thanks for subscribing with: ${email}`, "success");
+      e.target.reset();
+    });
+  }
+}
+
+// ========== INITIALIZATION ==========
+document.addEventListener("DOMContentLoaded", () => {
+  // Load cart from localStorage
+  loadCartFromLocalStorage();
+
+  // Setup mobile menu
+  setupMobileMenu();
+
+  // Add navigation listeners
+  addNavigationListeners();
+
+  // Load initial data (this will show spinner automatically)
+  loadInitialData().then(() => {
+    // After data is loaded and main content is rendered
+    addTrendingSection();
+    addNewsletterAndFooter();
+    updateCartUI();
+  });
+});
