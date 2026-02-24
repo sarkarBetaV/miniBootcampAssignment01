@@ -700,3 +700,43 @@ function placeOrder() {
     console.log("Order placed successfully");
   }, 2000);
 }
+
+// Success Modal Functions
+function openSuccessModal() {
+  console.log("Opening success modal"); // Debug log
+
+  const successModal = document.getElementById("successModal");
+  if (successModal) {
+    successModal.classList.remove("hidden");
+    successModal.classList.add("flex");
+    document.body.style.overflow = "hidden";
+  }
+}
+
+function closeSuccessModal() {
+  console.log("Closing success modal"); // Debug log
+
+  const successModal = document.getElementById("successModal");
+  if (successModal) {
+    successModal.classList.add("hidden");
+    successModal.classList.remove("flex");
+    document.body.style.overflow = "auto";
+  }
+}
+
+// Make success modal functions globally accessible
+window.closeSuccessModal = closeSuccessModal;
+// ========== SUCCESS MODAL FUNCTIONS ==========
+function openSuccessModal() {
+  const successModal = document.getElementById("successModal");
+  successModal.classList.remove("hidden");
+  successModal.classList.add("flex");
+  document.body.style.overflow = "hidden";
+}
+
+function closeSuccessModal() {
+  const successModal = document.getElementById("successModal");
+  successModal.classList.add("hidden");
+  successModal.classList.remove("flex");
+  document.body.style.overflow = "auto";
+}
