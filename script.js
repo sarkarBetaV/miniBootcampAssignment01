@@ -893,3 +893,204 @@ function showToast(message, type = "success") {
     }, 500);
   }, 3000);
 }
+
+// ========== CART FUNCTIONS ==========
+function addToCart(productId) {
+  const product = state.products.find((p) => p.id === productId);
+  if (!product) return;
+
+  const existingItem = state.cart.find((item) => item.id === productId);
+
+  if (existingItem) {
+    existingItem.quantity += 1;
+    showToast(
+      `Added another ${product.title.substring(0, 30)}... to cart!`,
+      "success",
+    );
+  } else {
+    state.cart.push({ ...product, quantity: 1 });
+    showToast(`${product.title.substring(0, 30)}... added to cart!`, "success");
+  }
+
+  updateCartUI();
+  saveCartToLocalStorage();
+}
+
+function removeFromCart(productId) {
+  state.cart = state.cart.filter((item) => item.id !== productId);
+  updateCartUI();
+  saveCartToLocalStorage();
+  showToast("Item removed from cart", "success");
+}
+
+function updateCartUI() {
+  // Update cart count
+  const cartCount = document.getElementById("cartCount");
+  const totalItems = state.cart.reduce((sum, item) => sum + item.quantity, 0);
+
+  if (totalItems > 0) {
+    cartCount.textContent = totalItems;
+    cartCount.classList.remove("hidden");
+  } else {
+    cartCount.classList.add("hidden");
+  }
+
+  // Update cart items if sidebar is open
+  const cartItems = document.getElementById("cartItems");
+  if (cartItems) {
+    cartItems.innerHTML = renderCartItems();
+  }
+
+  // Update total in sidebar
+  const totalElement = document.querySelector("#cartSidebar .text-blue-600");
+  if (totalElement) {
+    totalElement.textContent = `$${calculateCartTotal().toFixed(2)}`;
+  }
+}
+
+function renderCartItems() {
+  if (state.cart.length === 0) {
+    return '<p class="text-gray-500 text-center py-8">Your cart is empty</p>';
+  }
+
+  return state.cart
+    .map(
+      (item) => `
+        <div class="flex items-center gap-3 mb-4 pb-4 border-b">
+            <img src="${item.image}" alt="${item.title}" class="w-16 h-16 object-contain">
+            <div class="flex-1">
+                <h4 class="font-semibold text-sm mb-1">${item.title.substring(0, 30)}...</h4>
+                <div class="flex justify-between items-center">
+                    <span class="text-blue-600 font-bold">$${item.price}</span>
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm">x${item.quantity}</span>
+                        <button class="remove-from-cart text-red-500 hover:text-red-700" data-id="${item.id}">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `,
+    )
+    .join("");
+}
+
+function calculateCartTotal() {
+  return state.cart.reduce(
+    (total, item) => total + item.price * item.quantity,
+    0,
+  );
+}
+
+function saveCartToLocalStorage() {
+  localStorage.setItem("swiftcart_cart", JSON.stringify(state.cart));
+}
+
+function loadCartFromLocalStorage() {
+  const savedCart = localStorage.getItem("swiftcart_cart");
+  if (savedCart) {
+    try {
+      state.cart = JSON.parse(savedCart);
+    } catch (e) {
+      console.error("Failed to load cart from localStorage");
+    }
+  }
+}
+
+// ========== MODAL FUNCTIONS ==========
+function openProductModal(productId) {
+  const product = state.products.find((p) => p.id === productId);
+  if (!product) return;
+
+  state.selectedProduct = product;
+  state.modalOpen = true;
+
+  const modal = document.createElement("div");
+  modal.id = "productModal";
+  modal.className =
+    "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50";
+  modal.innerHTML = `
+        <div class="bg-white rounded-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="p-6">
+                <div class="flex justify-between items-start mb-4">
+                    <h2 class="text-2xl font-bold">Product Details</h2>
+                    <button id="closeModal" class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-times text-2xl"></i>
+                    </button>
+                </div>
+                <div class="flex flex-col md:flex-row gap-6">
+                    <div class="md:w-1/2">
+                        <img src="${product.image}" alt="${product.title}" class="w-full h-64 object-contain">
+                    </div>
+                    <div class="md:w-1/2">
+                        <h3 class="text-xl font-bold mb-2">${product.title}</h3>
+                        <p class="text-gray-600 mb-4">${product.description}</p>
+                        <div class="flex items-center mb-4">
+                            <span class="text-3xl font-bold text-blue-600">$${product.price}</span>
+                            <span class="ml-4 bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm">${product.category}</span>
+                        </div>
+                        <div class="flex items-center mb-4">
+                            <div class="flex text-yellow-400 mr-2">
+                                ${renderStars(product.rating.rate)}
+                            </div>
+                            <span class="text-gray-500">(${product.rating.count} reviews)</span>
+                        </div>
+                        <button class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition add-to-cart-btn" data-id="${product.id}">
+                            Add to Cart
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+  document.body.appendChild(modal);
+
+  // Add event listeners to modal
+  document
+    .getElementById("closeModal")
+    .addEventListener("click", closeProductModal);
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) closeProductModal();
+  });
+
+  // Add to cart button inside modal
+  modal.querySelector(".add-to-cart-btn").addEventListener("click", (e) => {
+    e.stopPropagation();
+    addToCart(productId);
+    closeProductModal();
+  });
+}
+
+function closeProductModal() {
+  const modal = document.getElementById("productModal");
+  if (modal) {
+    modal.remove();
+    state.modalOpen = false;
+    state.selectedProduct = null;
+  }
+}
+
+// ========== EVENT LISTENERS ==========
+function addCategoryListeners() {
+  document.querySelectorAll(".category-btn").forEach((btn) => {
+    btn.addEventListener("click", async (e) => {
+      const category = e.target.dataset.category;
+
+      // Update active state
+      document.querySelectorAll(".category-btn").forEach((b) => {
+        b.classList.remove("bg-blue-600", "text-white");
+        b.classList.add("bg-gray-200", "hover:bg-gray-300");
+      });
+      e.target.classList.remove("bg-gray-200", "hover:bg-gray-300");
+      e.target.classList.add("bg-blue-600", "text-white");
+
+      // Update selected category and load products
+      state.selectedCategory = category;
+
+      // Show loading and load products
+      await loadProductsByCategory(category);
+    });
+  });
+}
