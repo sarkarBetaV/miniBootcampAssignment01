@@ -460,3 +460,243 @@ function renderStars(rating) {
 
   return stars;
 }
+
+// ========== CHECKOUT FUNCTIONS ==========
+
+// Make functions globally accessible by attaching to window object
+window.closeCheckout = closeCheckout;
+window.openCheckout = openCheckout;
+window.toggleCreditCardFields = toggleCreditCardFields;
+window.placeOrder = placeOrder;
+
+function openCheckout() {
+  console.log("openCheckout called"); // Debug log
+
+  if (!state.cart || state.cart.length === 0) {
+    showToast("Your cart is empty! Add some items first.", "error");
+    return;
+  }
+
+  const checkoutModal = document.getElementById("checkoutModal");
+  if (!checkoutModal) {
+    console.log("Checkout modal not found!");
+    return;
+  }
+
+  // Update summary before showing modal
+  updateCheckoutSummary();
+
+  // Show modal
+  checkoutModal.classList.remove("hidden");
+  checkoutModal.classList.add("flex");
+  document.body.style.overflow = "hidden"; // Prevent background scrolling
+
+  // Close cart sidebar if open
+  const cartSidebar = document.getElementById("cartSidebar");
+  if (cartSidebar && !cartSidebar.classList.contains("translate-x-full")) {
+    cartSidebar.classList.add("translate-x-full");
+  }
+
+  // Reset credit card fields visibility
+  const creditRadio = document.querySelector(
+    'input[name="payment"][value="credit"]',
+  );
+  if (creditRadio) {
+    creditRadio.checked = true;
+    toggleCreditCardFields();
+  }
+
+  console.log("Checkout modal opened successfully");
+}
+
+function closeCheckout() {
+  console.log("closeCheckout called"); // Debug log
+
+  const checkoutModal = document.getElementById("checkoutModal");
+  if (checkoutModal) {
+    checkoutModal.classList.add("hidden");
+    checkoutModal.classList.remove("flex");
+    document.body.style.overflow = "auto"; // Restore scrolling
+
+    // Reset form
+    const form = document.getElementById("checkoutForm");
+    if (form) {
+      form.reset();
+    }
+
+    // Hide credit card details
+    const creditCardDetails = document.getElementById("creditCardDetails");
+    if (creditCardDetails) {
+      creditCardDetails.classList.add("hidden");
+    }
+
+    console.log("Checkout modal closed successfully");
+  } else {
+    console.log("Checkout modal not found in closeCheckout");
+  }
+}
+
+function updateCheckoutSummary() {
+  console.log("Updating checkout summary"); // Debug log
+
+  const checkoutCartItems = document.getElementById("checkoutCartItems");
+  if (!checkoutCartItems) {
+    console.log("Checkout cart items element not found");
+    return;
+  }
+
+  const subtotal = calculateCartTotal();
+  const shipping = 5.99;
+  const tax = subtotal * 0.1; // 10% tax
+  const total = subtotal + shipping + tax;
+
+  // Render cart items with enhanced styling
+  if (state.cart.length === 0) {
+    checkoutCartItems.innerHTML =
+      '<p class="text-gray-500 text-center py-4">Your cart is empty</p>';
+  } else {
+    checkoutCartItems.innerHTML = state.cart
+      .map(
+        (item) => `
+            <div class="flex items-center gap-4 p-3 bg-white rounded-lg shadow-sm mb-3">
+                <img src="${item.image}" alt="${item.title}" class="w-16 h-16 object-contain border rounded-lg p-2">
+                <div class="flex-1">
+                    <p class="font-semibold text-base mb-1" title="${item.title}">
+                        ${item.title.substring(0, 35)}${item.title.length > 35 ? "..." : ""}
+                    </p>
+                    <p class="text-gray-600 text-sm">$${item.price.toFixed(2)} x ${item.quantity}</p>
+                </div>
+                <span class="font-bold text-blue-600 text-lg">$${(item.price * item.quantity).toFixed(2)}</span>
+            </div>
+        `,
+      )
+      .join("");
+  }
+
+  // Update price breakdown
+  const subtotalEl = document.getElementById("checkoutSubtotal");
+  const shippingEl = document.getElementById("checkoutShipping");
+  const taxEl = document.getElementById("checkoutTax");
+  const totalEl = document.getElementById("checkoutTotal");
+
+  if (subtotalEl) subtotalEl.textContent = `$${subtotal.toFixed(2)}`;
+  if (shippingEl) shippingEl.textContent = `$${shipping.toFixed(2)}`;
+  if (taxEl) taxEl.textContent = `$${tax.toFixed(2)}`;
+  if (totalEl) totalEl.textContent = `$${total.toFixed(2)}`;
+
+  console.log("Checkout summary updated");
+}
+
+function toggleCreditCardFields() {
+  console.log("Toggling credit card fields"); // Debug log
+
+  const creditCardDetails = document.getElementById("creditCardDetails");
+  const creditRadio = document.querySelector(
+    'input[name="payment"][value="credit"]',
+  );
+
+  if (!creditCardDetails || !creditRadio) {
+    console.log("Credit card elements not found");
+    return;
+  }
+
+  if (creditRadio.checked) {
+    creditCardDetails.classList.remove("hidden");
+    // Make credit card fields required
+    creditCardDetails.querySelectorAll("input").forEach((input) => {
+      input.required = true;
+    });
+    console.log("Credit card fields shown");
+  } else {
+    creditCardDetails.classList.add("hidden");
+    // Remove required from credit card fields
+    creditCardDetails.querySelectorAll("input").forEach((input) => {
+      input.required = false;
+    });
+    console.log("Credit card fields hidden");
+  }
+}
+
+function placeOrder() {
+  console.log("placeOrder called"); // Debug log
+
+  const form = document.getElementById("checkoutForm");
+  if (!form) {
+    console.log("Checkout form not found");
+    return;
+  }
+
+  // Validate form
+  if (!form.checkValidity()) {
+    console.log("Form validation failed");
+    form.reportValidity();
+    return;
+  }
+
+  // Show loading state
+  const placeOrderBtn = document.getElementById("placeOrderBtn");
+  if (!placeOrderBtn) {
+    console.log("Place order button not found");
+    return;
+  }
+
+  const originalText = placeOrderBtn.innerHTML;
+  placeOrderBtn.innerHTML =
+    '<i class="fas fa-spinner fa-spin mr-2"></i> Processing...';
+  placeOrderBtn.disabled = true;
+
+  // Collect form data for debugging
+  const formData = new FormData(form);
+  console.log("Order details:", Object.fromEntries(formData));
+
+  // Simulate order processing
+  setTimeout(() => {
+    // Generate random order number
+    const orderNumber = "SWIFT" + Math.floor(Math.random() * 1000000);
+    const orderNumberEl = document.getElementById("orderNumber");
+    if (orderNumberEl) {
+      orderNumberEl.textContent = orderNumber;
+    }
+
+    // Set estimated delivery date (3-5 days from now)
+    const deliveryDate = new Date();
+    deliveryDate.setDate(deliveryDate.getDate() + 4);
+    const deliveryDateEl = document.getElementById("estimatedDelivery");
+    if (deliveryDateEl) {
+      deliveryDateEl.textContent = `Expected by ${deliveryDate.toLocaleDateString(
+        "en-US",
+        {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        },
+      )}`;
+    }
+
+    // Close checkout modal
+    closeCheckout();
+
+    // Clear cart
+    state.cart = [];
+    updateCartUI();
+    saveCartToLocalStorage();
+
+    // Show success modal
+    openSuccessModal();
+
+    // Reset button
+    placeOrderBtn.innerHTML = originalText;
+    placeOrderBtn.disabled = false;
+
+    // Reset form
+    form.reset();
+
+    // Hide credit card fields
+    const creditCardDetails = document.getElementById("creditCardDetails");
+    if (creditCardDetails) {
+      creditCardDetails.classList.add("hidden");
+    }
+
+    console.log("Order placed successfully");
+  }, 2000);
+}
